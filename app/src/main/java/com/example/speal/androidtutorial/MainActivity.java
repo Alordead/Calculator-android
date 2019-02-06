@@ -3,424 +3,196 @@ package com.example.speal.androidtutorial;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 
-/*
-    19.09.18
-    Неправильно написан код работы калькулятора в принципе. Переписать.
- */
+// Now this code is better than it was I think, but sure it's not enough :)
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button zero;
-    private Button one;
-    private Button two;
-    private Button three;
-    private Button four;
-    private Button five;
-    private Button six;
-    private Button seven;
-    private Button eight;
-    private Button nine;
-    private Button add;
-    private Button sub;
-    private Button mul;
-    private Button div;
-    private Button equal;
-    private Button clear;
-    private TextView info;
-    private TextView result;
-    private TextView textwa;
-    private final char ADDITION = '+';
-    private final char SUBTRACTION = '-';
-    private final char MULTIPLICATION = '*';
-    private final char DIVISION = '/';
-    private final char EQU = 0;
-    private double val1 = Double.NaN;
-    private double val2;
-    private char ACTION;
-    private int counter = 0;
+    public static char SUB = '-';
+    public static char MUL = '*';
+    public static char DIV = '/';
+    public static char ADD = '+';
 
-    private boolean isOperation = false, isDot = false, isZero = false;
-    private String value = "",
-                   value_old = "0";
-    Double Result;
-    private char operationType = 'x';
+    private TextView infoTextView;
+    private TextView resultTextView;
+    private TextView equalsTextView;
+
+    private Boolean operationModeEnabled = false, isDot = false;
+    private String value = "", previousValue = "0";
+    private Character operationType = 'x';
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+
         View decorView = getWindow().getDecorView();
         int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
+
+        setContentView(R.layout.activity_main);
         decorView.setSystemUiVisibility(uiOptions);
         setupUIViews();
-
-        //ActionBar actionBar = getActionBar();
-        //actionBar.hide();
-
     }
 
-    private void setupUIViews(){
-        info = (TextView)findViewById(R.id.txResult);
-        result = (TextView)findViewById(R.id.txControl);
-        textwa = (TextView)findViewById(R.id.text_wa);
+    private void setupUIViews() {
+        infoTextView = findViewById(R.id.txResult);
+        resultTextView = findViewById(R.id.txControl);
+        equalsTextView = findViewById(R.id.text_wa);
+    }
+
+    private void doOperationWithButton(Integer buttonNumber) {
+        if (infoTextView.getText().toString().isEmpty()) { resultTextView.setText(""); }
+        infoTextView.setText(infoTextView.getText().toString() + buttonNumber.toString());
+        value = value + buttonNumber.toString();
+        if (operationType != 'x') {
+            resultTextView.setText(handleMathOperation(operationType, resultTextView.getText().toString(), value));
+            previousValue = value;
+        } else {
+            resultTextView.setText(value);
+        }
+        operationModeEnabled = false;
+    }
+
+    private void equalsButtonTapped() {
+        infoTextView.setText("");
+        operationType='x';
+        value="";
+        operationModeEnabled = false;
+        isDot = false;
+    }
+
+    private void dotButtonTapped() {
+        if(!isDot && value.length() != 0) {
+            infoTextView.setText(infoTextView.getText().toString() + ".");
+            value += ".";
+        } else if (!isDot && value.length() == 0)
+        {
+            infoTextView.setText(infoTextView.getText().toString() + "0" + ".");
+            value += "0.";
+        }
+        isDot = true;
+    }
+
+    private void operationButtonTapped(char operationChar) {
+        if (infoTextView.getText().toString().isEmpty()) {
+            if (resultTextView.getText().toString().isEmpty()) {
+                infoTextView.setText(infoTextView.getText().toString()+'0');
+            } else {
+                infoTextView.setText(infoTextView.getText().toString()+ resultTextView.getText().toString());
+            }
+            value = value + "0";
+            previousValue = value;
+            isDot = false;
+            operationModeEnabled = false;
+        }
+        if (!operationModeEnabled) {
+            infoTextView.setText(infoTextView.getText().toString() + operationChar);
+            value = "";
+            operationModeEnabled = true;
+            operationType = operationChar;
+            previousValue = "0";
+            isDot = false;
+        } else if (operationModeEnabled && operationType != operationChar) {
+            String str_oper = infoTextView.getText().toString();
+            String str_oper2 = str_oper.substring(0,str_oper.length()-1)+ operationChar;
+            infoTextView.setText(str_oper2);
+
+            value = "";
+            operationModeEnabled = true;
+            operationType = operationChar;
+            previousValue = "0";
+            isDot = false;
+        }
     }
 
     public void buttonOnClick(View v) {
-        result.setVisibility(View.VISIBLE);
-        info.setVisibility(View.VISIBLE);
-        textwa.setVisibility(View.VISIBLE);
+        resultTextView.setVisibility(View.VISIBLE);
+        infoTextView.setVisibility(View.VISIBLE);
+        equalsTextView.setVisibility(View.VISIBLE);
         switch (v.getId()) {
             case R.id.button0:
-
-                if (info.getText().toString().isEmpty()) { result.setText(""); }
-                if (isDot == false && value == "0") {
-
-                } else if (isDot == false && info.getText().toString().isEmpty() ) {
-                    info.setText(info.getText().toString() + "0");
-                    value = value + "0";
-                    if (operationType != 'x') {
-                        result.setText(operation(operationType, result.getText().toString(), value));
-                        value_old = value;
-                    } else {
-                        result.setText(value);
-                    }
-                    isOperation = false;
-                } else  {
-                    info.setText(info.getText().toString() + "0");
-                    value = value + "0";
-                    if (operationType != 'x') {
-                        result.setText(operation(operationType, result.getText().toString(), value));
-                        value_old = value;
-                    } else {
-                        result.setText(value);
-                    }
-                    isOperation = false;
-                }
-
+                if (infoTextView.getText().toString().isEmpty()) { resultTextView.setText(""); }
+                if (isDot || value.equals("0")) { doOperationWithButton(0); }
                 break;
             case R.id.button1:
-                if (info.getText().toString().isEmpty()) { result.setText(""); }
-                info.setText(info.getText().toString() + "1");
-                value = value + "1";
-                if (operationType != 'x') {
-                    result.setText(operation(operationType, result.getText().toString(), value));
-                    value_old = value;
-                } else {
-                    result.setText(value);
-                }
-                isOperation = false;
+                doOperationWithButton(1);
                 break;
             case R.id.button2:
-                if (info.getText().toString().isEmpty()) { result.setText(""); }
-                info.setText(info.getText().toString() + "2");
-                value = value + "2";
-                if (operationType != 'x') {
-                    result.setText(operation(operationType, result.getText().toString(), value));
-                    value_old = value;
-                } else {
-                    result.setText(value);
-                }
-                isOperation = false;
+                doOperationWithButton(2);
                 break;
             case R.id.button3:
-                if (info.getText().toString().isEmpty()) { result.setText(""); }
-                info.setText(info.getText().toString() + "3");
-                value = value + "3";
-                if (operationType != 'x') {
-                    result.setText(operation(operationType, result.getText().toString(), value));
-                    value_old = value;
-                } else {
-                    result.setText(value);
-                }
-                isOperation = false;
+                doOperationWithButton(3);
                 break;
             case R.id.button4:
-                if (info.getText().toString().isEmpty()) { result.setText(""); }
-                info.setText(info.getText().toString() + "4");
-                value = value + "4";
-                if (operationType != 'x') {
-                    result.setText(operation(operationType, result.getText().toString(), value));
-                    value_old = value;
-                } else {
-                    result.setText(value);
-                }
-                isOperation = false;
+                doOperationWithButton(4);
                 break;
             case R.id.button5:
-                if (info.getText().toString().isEmpty()) { result.setText(""); }
-                info.setText(info.getText().toString() + "5");
-                value = value + "5";
-                if (operationType != 'x') {
-                    result.setText(operation(operationType, result.getText().toString(), value));
-                    value_old = value;
-                } else {
-                    result.setText(value);
-                }
-                isOperation = false;
+                doOperationWithButton(5);
                 break;
             case R.id.button6:
-                if (info.getText().toString().isEmpty()) { result.setText(""); }
-                info.setText(info.getText().toString() + "6");
-                value = value + "6";
-                if (operationType != 'x') {
-                    result.setText(operation(operationType, result.getText().toString(), value));
-                    value_old = value;
-                } else {
-                    result.setText(value);
-                }
-                isOperation = false;
+                doOperationWithButton(6);
                 break;
             case R.id.button7:
-                if (info.getText().toString().isEmpty()) { result.setText(""); }
-                info.setText(info.getText().toString() + "7");
-                value = value + "7";
-                if (operationType != 'x') {
-                    result.setText(operation(operationType, result.getText().toString(), value));
-                    value_old = value;
-                } else {
-                    result.setText(value);
-                }
-                isOperation = false;
+                doOperationWithButton(7);
                 break;
             case R.id.button8:
-                if (info.getText().toString().isEmpty()) { result.setText(""); }
-                info.setText(info.getText().toString() + "8");
-                value = value + "8";
-                if (operationType != 'x') {
-                    result.setText(operation(operationType, result.getText().toString(), value));
-                    value_old = value;
-                } else {
-                    result.setText(value);
-                }
-                isOperation = false;
+                doOperationWithButton(8);
                 break;
             case R.id.button9:
-                if (info.getText().toString()=="") { result.setText(""); }
-                info.setText(info.getText().toString() + "9");
-                value = value + "9";
-                if (operationType != 'x') {
-                    result.setText(operation(operationType, result.getText().toString(), value));
-                    value_old = value;
-                } else {
-                    result.setText(value);
-                }
-                isOperation = false;
+                doOperationWithButton(9);
                 break;
-
             case R.id.buttonwa:
-                info.setText("");
-                operationType='x';
-                value="";
-                isOperation = false;
-                isDot = false;
-                isZero = false;
+                equalsButtonTapped();
                 break;
             case R.id.buttonpoint:
-                if(isDot == false && value.length() != 0) {
-                    info.setText(info.getText().toString() + ".");
-                    value += ".";
-                    isDot = true;
-                } else if (isDot == false && value.length() == 0)
-                {
-                    info.setText(info.getText().toString() + "0" + ".");
-                    value += "0.";
-                    isDot = true;
-                }
+                dotButtonTapped();
                 break;
-
             case R.id.buttonplus:
-                if (info.getText().toString().isEmpty()) {
-                    if (result.getText().toString().isEmpty()) {
-                        info.setText(info.getText().toString()+'0');
-                    } else {
-                        info.setText(info.getText().toString()+result.getText().toString());
-                    }
-                    value = value + "0";
-                    value_old = value;
-                    isDot = false;
-                    isOperation = false;
-                }
-                if (isOperation == false) {
-                    info.setText(info.getText().toString() + "+");
-                   // Result = Double.parseDouble(result.getText().toString()) + Double.parseDouble(value);
-                   // result.setText(Result.toString());
-                    value = "";
-                    isOperation = true;
-                    operationType = '+';
-                    value_old = "0";
-                    isDot = false;
-                } else if (isOperation == true && operationType != '+') {
-                    String str_oper = info.getText().toString();
-                    String str_oper2 = str_oper.substring(0,str_oper.length()-1)+'+';
-                    info.setText(str_oper2);
-
-                    value = "";
-                    isOperation = true;
-                    operationType = '+';
-                    value_old = "0";
-                    isDot = false;
-                }
+                operationButtonTapped(ADD);
                 break;
             case R.id.buttonmin:
-                if (info.getText().toString().isEmpty()) {
-                    if (result.getText().toString().isEmpty()) {
-                        info.setText(info.getText().toString()+'0');
-                    } else {
-                        info.setText(info.getText().toString()+result.getText().toString());
-                    }
-                    value = value + "0";
-                    value_old = value;
-                    isDot = false;
-                    isOperation = false;
-                }
-                if (isOperation == false) {
-                    info.setText(info.getText().toString() + "-");
-                  //  Result = Double.parseDouble(result.getText().toString()) - Double.parseDouble(value);
-                    // result.setText(Result.toString());
-                    value = "";
-                    isOperation = true;
-                    operationType = '-';
-                    value_old = "0";
-                    isDot = false;
-                } else if (isOperation == true && operationType != '-') {
-                    String str_oper = info.getText().toString();
-                    String str_oper2 = str_oper.substring(0,str_oper.length()-1)+'-';
-                    info.setText(str_oper2);
-
-                    value = "";
-                    isOperation = true;
-                    operationType = '-';
-                    value_old = "0";
-                    isDot = false;
-                }
+                operationButtonTapped(SUB);
                 break;
             case R.id.buttonumn:
-                if (info.getText().toString().isEmpty()) {
-                    if (result.getText().toString().isEmpty()) {
-                        info.setText(info.getText().toString()+'0');
-                    } else {
-                        info.setText(info.getText().toString()+result.getText().toString());
-                    }
-                    value = value + "0";
-                    value_old = value;
-                    isDot = false;
-                    isOperation = false;
-                }
-                if (isOperation == false) {
-                    info.setText(info.getText().toString() + "*");
-                   // Result = Double.parseDouble(result.getText().toString()) * Double.parseDouble(value);
-                  //  result.setText(Result.toString());
-                    value = "";
-                    isOperation = true;
-                    operationType = '*';
-                    value_old = "0";
-                    isDot = false;
-                } else if (isOperation == true && operationType != '*') {
-                    String str_oper = info.getText().toString();
-                    String str_oper2 = str_oper.substring(0,str_oper.length()-1)+'*';
-                    info.setText(str_oper2);
-
-                    value = "";
-                    isOperation = true;
-                    operationType = '*';
-                    value_old = "0";
-                    isDot = false;
-                }
+                operationButtonTapped(MUL);
                 break;
             case R.id.buttondel:
-                if (info.getText().toString().isEmpty()) {
-                    if (!result.getText().toString().isEmpty()) {
-                        info.setText(info.getText().toString()+result.getText().toString());
-                    } else {
-                    info.setText(info.getText().toString()+'0');
-                }
-                    value = value + "0";
-                    value_old = value;
-                    isDot = false;
-                    isOperation = false;
-                }
-                if (isOperation == false) {
-                    info.setText(info.getText().toString() + "/");
-                   // Result = Double.parseDouble(result.getText().toString()) / Double.parseDouble(value);
-                  //  result.setText(Result.toString());
-                    value = "";
-                    isOperation = true;
-                    operationType = '/';
-                    value_old = "0";
-                    isDot = false;
-                } else if (isOperation == true && operationType != '/') {
-                    String str_oper = info.getText().toString();
-                    String str_oper2 = str_oper.substring(0,str_oper.length()-1)+'/';
-                    info.setText(str_oper2);
-
-                    value = "";
-                    isOperation = true;
-                    operationType = '/';
-                    value_old = "0";
-                    isDot = false;
-                }
+                operationButtonTapped(DIV);
                 break;
         }
     }
-    private String operation(char  operationType, String value1, String value2) {
-        Double db = Double.NaN;
+    private String handleMathOperation(char operationType, String value1, String value2) {
+        double doubleValue = Double.NaN;
         switch (operationType) {
             case '+':
-                db = Double.parseDouble(value1) + Double.parseDouble(value2) - Double.parseDouble(value_old);
+                doubleValue = Double.parseDouble(value1) + Double.parseDouble(value2) - Double.parseDouble(previousValue);
                 break;
             case '-':
-                db = Double.parseDouble(value1) - Double.parseDouble(value2) + Double.parseDouble(value_old);
+                doubleValue = Double.parseDouble(value1) - Double.parseDouble(value2) + Double.parseDouble(previousValue);
                 break;
             case '*':
-                db = Double.parseDouble(value1) * Double.parseDouble(value2);
-                if (Double.parseDouble(value_old)>0) {
-                    db = db / Double.parseDouble(value_old);
+                doubleValue = Double.parseDouble(value1) * Double.parseDouble(value2);
+                if (Double.parseDouble(previousValue) > 0) {
+                    doubleValue = doubleValue / Double.parseDouble(previousValue);
                 }
                 break;
             case '/':
-                db = Double.parseDouble(value1) / Double.parseDouble(value2);
-                if (Double.parseDouble(value_old)>0) {
-                    float getfloat =  db.floatValue() * Float.parseFloat(value_old);
-                    db =(double)getfloat;
+                doubleValue = Double.parseDouble(value1) / Double.parseDouble(value2);
+                if (Double.parseDouble(previousValue) > 0) {
+                    doubleValue = doubleValue * Double.parseDouble(previousValue);
                 }
                 break;
-        } /*
-        Integer db_strlast = db.toString().indexOf(".0");
-        String dbstr = db.toString();
-        boolean zerostring = false;
-        for (int i = db_strlast; i<=dbstr.length();i++)
-        {
-            if (dbstr.charAt(i) == 0) {
-                zerostring = true;
-            }
-            else {
-                zerostring = false;
-                break;
-            }
         }
-        if (zerostring) {
-            Integer idb = db.intValue();
-            return idb.toString();
-        }
-        */
-        if (db % 1 == 0) {
-            Integer idb = db.intValue();
-            return idb.toString();
+        if (doubleValue % 1 == 0) {
+            return Double.toString(doubleValue);
         } else {
-            if (db.toString().length()>15) {
-                String db_str = db.toString().substring(0,15);
-                db = Double.parseDouble(db_str);
-                return db.toString();
+            if (Double.toString(doubleValue).length() > 15) {
+                String doubleParsedString = Double.toString(doubleValue).substring(0,15);
+                Double tempDouble = Double.parseDouble(doubleParsedString);
+                return tempDouble.toString();
             } else {
-                return db.toString();
+                return Double.toString(doubleValue);
             }
         }
-    }
-    void button0_onclick() {
-
-
     }
 }
